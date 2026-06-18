@@ -1,0 +1,634 @@
+{
+  "service": {
+    "name": "address",
+    "namespace": "co.forsyte.address.v0",
+    "description": "Organisation address API with parse and resolve helpers. Field names use snake_case in this spec.",
+    "imports": [
+      {
+        "uri": "https://app.apibuilder.io/forsyte/common/latest/service.json"
+      },
+      {
+        "uri": "https://app.apibuilder.io/forsyte/healthcheck/latest/service.json"
+      },
+      {
+        "uri": "https://app.apibuilder.io/forsyte/error/latest/service.json"
+      }
+    ],
+    "enums": {
+      "address_parse_source": {
+        "values": [
+          {
+            "name": "rules"
+          },
+          {
+            "name": "llm"
+          }
+        ]
+      },
+      "address_resolve_source": {
+        "values": [
+          {
+            "name": "extract_llm"
+          },
+          {
+            "name": "extract_rules"
+          },
+          {
+            "name": "lookup"
+          },
+          {
+            "name": "disambiguation_llm"
+          },
+          {
+            "name": "none"
+          }
+        ]
+      }
+    },
+    "models": {
+      "country": {
+        "fields": [
+          {
+            "name": "id",
+            "type": "string"
+          },
+          {
+            "name": "name",
+            "type": "string"
+          },
+          {
+            "name": "risk_level",
+            "type": "string",
+            "required": false
+          }
+        ]
+      },
+      "address": {
+        "fields": [
+          {
+            "name": "id",
+            "type": "string"
+          },
+          {
+            "name": "street",
+            "type": "string",
+            "required": false
+          },
+          {
+            "name": "city",
+            "type": "string",
+            "required": false
+          },
+          {
+            "name": "county",
+            "type": "string",
+            "required": false
+          },
+          {
+            "name": "postcode",
+            "type": "string",
+            "required": false
+          },
+          {
+            "name": "country_id",
+            "type": "string",
+            "required": false
+          },
+          {
+            "name": "country",
+            "type": "country",
+            "required": false
+          }
+        ]
+      },
+      "address_form": {
+        "fields": [
+          {
+            "name": "street",
+            "type": "string",
+            "required": false
+          },
+          {
+            "name": "city",
+            "type": "string",
+            "required": false
+          },
+          {
+            "name": "county",
+            "type": "string",
+            "required": false
+          },
+          {
+            "name": "postcode",
+            "type": "string",
+            "required": false
+          },
+          {
+            "name": "country_id",
+            "type": "string",
+            "required": false
+          }
+        ]
+      },
+      "address_put_form": {
+        "fields": [
+          {
+            "name": "street",
+            "type": "string",
+            "required": false
+          },
+          {
+            "name": "city",
+            "type": "string",
+            "required": false
+          },
+          {
+            "name": "county",
+            "type": "string",
+            "required": false
+          },
+          {
+            "name": "postcode",
+            "type": "string",
+            "required": false
+          },
+          {
+            "name": "country_id",
+            "type": "string",
+            "required": false
+          }
+        ]
+      },
+      "address_parse_form": {
+        "fields": [
+          {
+            "name": "text",
+            "type": "string"
+          },
+          {
+            "name": "use_llm",
+            "type": "boolean",
+            "required": false
+          }
+        ]
+      },
+      "address_parse_result": {
+        "fields": [
+          {
+            "name": "street",
+            "type": "string",
+            "required": false
+          },
+          {
+            "name": "city",
+            "type": "string",
+            "required": false
+          },
+          {
+            "name": "county",
+            "type": "string",
+            "required": false
+          },
+          {
+            "name": "postcode",
+            "type": "string",
+            "required": false
+          },
+          {
+            "name": "country_id",
+            "type": "string",
+            "required": false
+          },
+          {
+            "name": "source",
+            "type": "address_parse_source"
+          },
+          {
+            "name": "complete",
+            "type": "boolean"
+          }
+        ]
+      },
+      "address_resolve_form": {
+        "fields": [
+          {
+            "name": "text",
+            "type": "string"
+          },
+          {
+            "name": "use_llm",
+            "type": "boolean",
+            "required": false
+          }
+        ]
+      },
+      "address_resolve_result": {
+        "fields": [
+          {
+            "name": "address_found",
+            "type": "boolean"
+          },
+          {
+            "name": "resolved",
+            "type": "boolean"
+          },
+          {
+            "name": "street",
+            "type": "string",
+            "required": false
+          },
+          {
+            "name": "city",
+            "type": "string",
+            "required": false
+          },
+          {
+            "name": "county",
+            "type": "string",
+            "required": false
+          },
+          {
+            "name": "postcode",
+            "type": "string",
+            "required": false
+          },
+          {
+            "name": "country_id",
+            "type": "string",
+            "required": false
+          },
+          {
+            "name": "udprn",
+            "type": "integer",
+            "required": false
+          },
+          {
+            "name": "source",
+            "type": "address_resolve_source"
+          },
+          {
+            "name": "complete",
+            "type": "boolean"
+          }
+        ]
+      }
+    },
+    "resources": {
+      "co.forsyte.healthcheck.v0.models.healthcheck": {
+        "path": "",
+        "operations": [
+          {
+            "method": "GET",
+            "path": "/healthz",
+            "responses": {
+              "200": {
+                "type": "co.forsyte.healthcheck.v0.models.healthcheck"
+              }
+            }
+          }
+        ]
+      },
+      "address": {
+        "path": "/:organisation_id_or_slug/addresses",
+        "operations": [
+          {
+            "method": "POST",
+            "path": "/parse",
+            "parameters": [
+              {
+                "name": "organisation_id_or_slug",
+                "type": "string",
+                "required": true
+              }
+            ],
+            "body": {
+              "type": "address_parse_form"
+            },
+            "responses": {
+              "200": {
+                "type": "address_parse_result"
+              },
+              "401": {
+                "type": "unit"
+              },
+              "422": {
+                "type": "co.forsyte.error.v0.models.error"
+              }
+            }
+          },
+          {
+            "method": "POST",
+            "path": "/resolve",
+            "parameters": [
+              {
+                "name": "organisation_id_or_slug",
+                "type": "string",
+                "required": true
+              }
+            ],
+            "body": {
+              "type": "address_resolve_form"
+            },
+            "responses": {
+              "200": {
+                "type": "address_resolve_result"
+              },
+              "401": {
+                "type": "unit"
+              },
+              "422": {
+                "type": "co.forsyte.error.v0.models.error"
+              }
+            }
+          },
+          {
+            "method": "GET",
+            "parameters": [
+              {
+                "name": "organisation_id_or_slug",
+                "type": "string",
+                "required": true
+              },
+              {
+                "name": "page",
+                "type": "integer",
+                "required": false
+              },
+              {
+                "name": "per_page",
+                "type": "integer",
+                "required": false
+              },
+              {
+                "name": "sort_by",
+                "type": "string",
+                "required": false
+              }
+            ],
+            "responses": {
+              "200": {
+                "type": "[address]"
+              },
+              "401": {
+                "type": "unit"
+              }
+            }
+          },
+          {
+            "method": "POST",
+            "parameters": [
+              {
+                "name": "organisation_id_or_slug",
+                "type": "string",
+                "required": true
+              }
+            ],
+            "body": {
+              "type": "address_form"
+            },
+            "responses": {
+              "201": {
+                "type": "address"
+              },
+              "401": {
+                "type": "unit"
+              },
+              "422": {
+                "type": "co.forsyte.error.v0.models.error"
+              }
+            }
+          },
+          {
+            "method": "GET",
+            "path": "/:address_id",
+            "parameters": [
+              {
+                "name": "organisation_id_or_slug",
+                "type": "string",
+                "required": true
+              },
+              {
+                "name": "address_id",
+                "type": "string",
+                "required": true
+              }
+            ],
+            "responses": {
+              "200": {
+                "type": "address"
+              },
+              "401": {
+                "type": "unit"
+              },
+              "404": {
+                "type": "unit"
+              }
+            }
+          },
+          {
+            "method": "PUT",
+            "path": "/:address_id",
+            "parameters": [
+              {
+                "name": "organisation_id_or_slug",
+                "type": "string",
+                "required": true
+              },
+              {
+                "name": "address_id",
+                "type": "string",
+                "required": true
+              }
+            ],
+            "body": {
+              "type": "address_put_form"
+            },
+            "responses": {
+              "200": {
+                "type": "address"
+              },
+              "401": {
+                "type": "unit"
+              },
+              "404": {
+                "type": "unit"
+              }
+            }
+          },
+          {
+            "method": "DELETE",
+            "path": "/:address_id",
+            "parameters": [
+              {
+                "name": "organisation_id_or_slug",
+                "type": "string",
+                "required": true
+              },
+              {
+                "name": "address_id",
+                "type": "string",
+                "required": true
+              }
+            ],
+            "responses": {
+              "204": {
+                "type": "unit"
+              },
+              "401": {
+                "type": "unit"
+              },
+              "404": {
+                "type": "unit"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "organization": {
+      "key": "forsyte"
+    },
+    "application": {
+      "key": "address"
+    },
+    "version": "0.0.1"
+  },
+  "imported_services": [
+    {
+      "name": "error",
+      "namespace": "co.forsyte.error.v0",
+      "description": "Shared error models for Forsyte API services",
+      "models": {
+        "error": {
+          "description": "Standard API error response",
+          "fields": [
+            {
+              "name": "code",
+              "type": "string",
+              "description": "Machine readable code for this specific error message"
+            },
+            {
+              "name": "message",
+              "type": "string",
+              "description": "Human readable description of the error"
+            }
+          ]
+        }
+      },
+      "organization": {
+        "key": "forsyte"
+      },
+      "application": {
+        "key": "error"
+      },
+      "version": "0.0.1"
+    },
+    {
+      "name": "healthcheck",
+      "namespace": "co.forsyte.healthcheck.v0",
+      "description": "Shared healthcheck models for Forsyte API services",
+      "models": {
+        "healthcheck": {
+          "description": "Healthcheck status for an API service",
+          "fields": [
+            {
+              "name": "status",
+              "type": "string",
+              "description": "Health status of the service",
+              "example": "healthy"
+            }
+          ]
+        }
+      },
+      "resources": {
+        "healthcheck": {
+          "path": "",
+          "operations": [
+            {
+              "method": "GET",
+              "path": "/healthz",
+              "description": "Check the overall health status of the API service",
+              "responses": {
+                "200": {
+                  "type": "healthcheck"
+                }
+              }
+            },
+            {
+              "method": "GET",
+              "path": "/readyz",
+              "description": "Check if the API service is ready to handle requests",
+              "responses": {
+                "200": {
+                  "type": "healthcheck"
+                }
+              }
+            }
+          ]
+        }
+      },
+      "organization": {
+        "key": "forsyte"
+      },
+      "application": {
+        "key": "healthcheck"
+      },
+      "version": "0.0.1"
+    },
+    {
+      "name": "common",
+      "namespace": "co.forsyte.common.v0",
+      "description": "Shared common models for Forsyte API services",
+      "models": {
+        "client_version": {
+          "description": "A historical version snapshot of a client record",
+          "fields": [
+            {
+              "name": "id",
+              "type": "string",
+              "description": "Unique identifier for this version record"
+            },
+            {
+              "name": "client_id",
+              "type": "string",
+              "description": "Identifier of the parent client record"
+            },
+            {
+              "name": "created_at",
+              "type": "date-time-iso8601",
+              "description": "ISO 8601 timestamp of when this version was created"
+            }
+          ]
+        },
+        "pagination": {
+          "description": "Pagination metadata for list responses",
+          "fields": [
+            {
+              "name": "page",
+              "type": "integer",
+              "description": "Current page number (starts from 1)"
+            },
+            {
+              "name": "per_page",
+              "type": "integer",
+              "description": "Number of records returned per page"
+            },
+            {
+              "name": "total",
+              "type": "integer",
+              "description": "Total number of records matching the query"
+            }
+          ]
+        }
+      },
+      "organization": {
+        "key": "forsyte"
+      },
+      "application": {
+        "key": "common"
+      },
+      "version": "0.0.1"
+    }
+  ],
+  "attributes": []
+}
